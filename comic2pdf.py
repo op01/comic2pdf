@@ -1,4 +1,5 @@
-"""Converts .cbr and .cbz files to .pdf.
+"""
+Converts .cbr and .cbz files to .pdf.
 Only works with comicbook files that contain JPG's (for now).
 """
 
@@ -47,15 +48,39 @@ def collect_images(path):
 
 def to_pdf(filename, tmpdirname):
     images = list(collect_images(tmpdirname))
-    images[0].save(filename, "PDF", resolution=100.0, save_all=True, append_images=images[1:])
+    images[0].save(
+        filename, "PDF",
+        resolution=100.0,
+        save_all=True,
+        append_images=images[1:]
+    )
+    for image in images:
+        image.close()
 
 
 def parse_config():
-    parser = argparse.ArgumentParser(description="Converts .cbr and .cbz files to .pdf", prog=PACKAGE_NAME)
-    parser.add_argument("path", nargs="+", help="paths to process")
-    parser.add_argument("-o", "--outdir", default=os.getcwd(), help="directory to place generated files")
-    parser.add_argument("-a", "--allow-overwrite", action="store_true", help="allow overwriting existing files")
-    parser.add_argument("--version", action="version", version="%(prog)s v" + __version__)
+    parser = argparse.ArgumentParser(
+        description="Converts .cbr and .cbz files to .pdf",
+        prog=PACKAGE_NAME
+    )
+    parser.add_argument(
+        "path", nargs="+", help="paths to process"
+    )
+    parser.add_argument(
+        "-o", "--outdir",
+        default=os.getcwd(),
+        help="directory to place generated files"
+    )
+    parser.add_argument(
+        "-a", "--allow-overwrite",
+        action="store_true",
+        help="allow overwriting existing files"
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version="%(prog)s v" + __version__
+    )
     return parser.parse_args()
 
 
@@ -66,37 +91,61 @@ def main():
         try:
             # if it's a relative path, make absolute
             filepath = os.path.join(os.getcwd(), filename)
-            # get filename without extension, basename gets us the filename from path
-            filename_noextn, extn = os.path.splitext(ntpath.basename(filename))
+            # get filename without extension, basename gets us the
+            # filename from path
+            filename_noextn, extn = os.path.splitext(
+                ntpath.basename(filename)
+            )
             # create output filename (pdf)
             newfilename = filename_noextn + ".pdf"
             newfilepath = os.path.join(config.outdir, newfilename)
 
-            # check if file has already been converted and whether we should skip
+            # check if file has already been converted and whether
+            # we should skip
             if os.path.exists(newfilepath) and not config.allow_overwrite:
-                print(f'skipping existing file "{filename}"', file=sys.stdout)
+                print(
+                    f'skipping existing file "{filename}"',
+                    file=sys.stdout
+                )
                 continue
 
             # make sure it's a recognised file type
             if extn not in EXTN_COMIC_ZIP + EXTN_COMIC_RAR:
-                print(f'skipping unrecognised file "{filename}"', file=sys.stdout)
+                print(
+                    f'skipping unrecognised file "{filename}"',
+                    file=sys.stdout
+                )
                 continue
 
-            # create a temporary folder to extract the contents of the comic (images) to
+            # create a temporary folder to extract the contents of the
+            # comic (images) to
             with tempfile.TemporaryDirectory() as tmpdirname:
-                print(f'processing file "{filename}"...', file=sys.stdout)
+                print(
+                    f'processing file "{filename}"...',
+                    file=sys.stdout
+                )
 
                 if extn in EXTN_COMIC_ZIP:
                     extract_cbz(filepath, tmpdirname)
                 elif extn in EXTN_COMIC_RAR:
                     extract_cbr(filepath, tmpdirname)
                 to_pdf(newfilepath, tmpdirname)
-                print(f'"{newfilename}" successfully converted!', file=sys.stdout)
+                print(
+                    f'"{newfilename}" successfully converted!',
+                    file=sys.stdout
+                )
 
         except Exception:  # pylint: disable=broad-except
             traceback.print_exc()
-            print(f'error processing "{filename}", skipping...', file=sys.stdout)
-    print(os.linesep + "we're all done!" + os.linesep, file=sys.stdout)
+            print(
+                f'error processing "{filename}", skipping...',
+                file=sys.stdout
+            )
+
+    print(
+        os.linesep + "we're all done!" + os.linesep,
+        file=sys.stdout
+    )
 
 
 if __name__ == "__main__":
