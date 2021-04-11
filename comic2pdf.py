@@ -54,6 +54,8 @@ def to_pdf(filename, tmpdirname):
         save_all=True,
         append_images=images[1:]
     )
+    for image in images:
+        image.close()
 
 
 def parse_config():
